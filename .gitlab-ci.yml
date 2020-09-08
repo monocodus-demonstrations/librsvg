@@ -1,0 +1,244 @@
+# -*- indent-tabs-mode: nil -*-
+
+variables:
+  # Container(OCI) images for various distros and architectures and compilers
+
+  AMD64_FEDORA_LATEST:       "registry.gitlab.gnome.org/gnome/librsvg-oci-images/amd64/fedora:latest"
+  AMD64_FEDORA_RAWHIDE:      "registry.gitlab.gnome.org/gnome/librsvg-oci-images/amd64/fedora:rawhide"
+  AMD64_OPENSUSE_TUMBLEWEED: "registry.gitlab.gnome.org/gnome/librsvg-oci-images/amd64/opensuse:tumbleweed"
+  AMD64_DEBIAN_TESTING:      "registry.gitlab.gnome.org/gnome/librsvg-oci-images/amd64/debian:testing"
+  AMD64_UBUNTU_BIONIC:       "registry.gitlab.gnome.org/gnome/librsvg-oci-images/amd64/ubuntu:18.04"
+
+  I386_DEBIAN_TESTING:       "registry.gitlab.gnome.org/gnome/librsvg-oci-images/i386/debian:testing"
+  I386_UBUNTU_BIONIC:        "registry.gitlab.gnome.org/gnome/librsvg-oci-images/i386/ubuntu:18.04"
+
+  RUSTC_1_26:                "registry.gitlab.gnome.org/gnome/librsvg-oci-images/rustc:1.26"
+  RUSTC_1_27:                "registry.gitlab.gnome.org/gnome/librsvg-oci-images/rustc:1.27"
+  RUSTC_1_28:                "registry.gitlab.gnome.org/gnome/librsvg-oci-images/rustc:1.28"
+
+stages:
+  - test
+  - lint
+  - distcheck
+  - rustc
+  - cross_distro
+
+.test_template: &test
+  script:
+    # CCache Config
+    - mkdir -p ccache
+    - mkdir -p .cargo_cache
+    - export CCACHE_BASEDIR=${PWD}
+    - export CCACHE_DIR=${PWD}/ccache
+    - export CC="ccache gcc"
+
+    # Only stuff inside the repo directory can be cached
+    # Override the CARGO_HOME variable to force it location
+    - export CARGO_HOME="${PWD}/.cargo_cache"
+
+    - rustc --version && cargo --version
+    - mkdir -p _build
+    - cd _build
+    - sudo ../autogen.sh --enable-gtk-doc --enable-vala
+    - sudo make
+    - sudo make check
+
+  artifacts:
+    when: 'always'
+    paths:
+      - _build/tests/*.log
+      - _build/tests/output/
+      - _build/*.gir
+      - _build/*.la
+      - _build/*.pc
+      - _build/*.typelib
+      - _build/*.vapi
+      - _build/.libs
+      - _build/Makefile
+      - _build/config*
+      - _build/doc
+      - _build/librsvg-zip
+      - _build/libtool
+      - _build/stamp*
+      - _build/win32
+      - compile
+      - config.guess
+      - config.h.in
+      - config.rpath
+      - config.sub
+      - depcomp
+      - gtk-doc.make
+      - install-sh
+      - ltmain.sh
+      - missing
+      - po
+      - test-driver
+    expire_in: 1 day
+
+  cache:
+    # JOB_NAME - Each job will have it's own cache
+    # COMMIT_REF_SLUG = Lowercase name of the branch
+    # ^ Keep diffrerent caches for each branch
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - _build/target/
+      - .cargo_cache/
+      - ccache/
+
+.distro_template: &distro_test
+    stage: cross_distro
+    <<: *test
+
+.rustc_template: &rustc
+    stage: rustc
+    <<: *test
+
+# Jobs that are marked as stage 3 will only run on scheduled pipelines.
+# Ideal targets for this stage are expensive task, that only need to be run
+# on a regular time interval. Ex testing all the gcc/rustc version that we target
+.test_stage_3: &stage_3
+  only:
+    - schedules
+    - tags
+    - web
+
+# STAGE 1 TESTS
+########################################################################
+
+.fedora test:
+  image: $AMD64_FEDORA_LATEST
+  stage: test
+  allow_failure: true
+  variables:
+    LIBRSVG_DEBUG: "yes"
+  <<: *test
+
+fedora:rawhide:
+  image: $AMD64_FEDORA_RAWHIDE
+  allow_failure: true
+  variables:
+    LIBRSVG_DEBUG: "yes"
+  <<: *distro_test
+
+opensuse:tumbleweed:
+  image: $AMD64_OPENSUSE_TUMBLEWEED
+  stage: test
+  variables:
+    LIBRSVG_DEBUG: "yes"
+  <<: *test
+
+debian:testing:
+  image: $AMD64_DEBIAN_TESTING
+  allow_failure: true
+  variables:
+    LIBRSVG_DEBUG: "yes"
+  before_script:
+    - export PATH=$PATH:/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0
+  <<: *distro_test
+
+debian_i386:testing:
+  image: $I386_DEBIAN_TESTING
+  allow_failure: true
+  variables:
+    LIBRSVG_DEBUG: "yes"
+  before_script:
+    - export PATH=$PATH:/usr/lib/i386-linux-gnu/gdk-pixbuf-2.0
+  <<: *distro_test
+
+# STAGE 1 LINTS
+########################################################################
+
+# Configure and run rustfmt
+# Exits and build fails on bad format
+rustfmt:
+  image: $AMD64_OPENSUSE_TUMBLEWEED
+  stage: lint
+  script:
+    - rustc --version && cargo --version
+    - cargo fmt --version
+    - sudo cargo fmt --all -- --check
+
+# Configure and run clippy
+# Only fails on errors atm.
+clippy:
+  image: $AMD64_OPENSUSE_TUMBLEWEED
+  stage: lint
+  script:
+    - rustc --version && cargo --version
+    - cargo clippy --version
+    - sudo cargo clippy --all
+
+tarball:
+  image: $AMD64_OPENSUSE_TUMBLEWEED
+  stage: lint
+  dependencies:
+    - opensuse:tumbleweed
+  variables:
+    LIBRSVG_DEBUG: "yes"
+  script:
+    - cd _build
+    - sudo make distcheck DESTDIR=/tmp/distcheck
+
+# STAGE 3 CROSS DISTRO TESTS
+#######################################################################
+
+fedora:test_release:
+  image: $AMD64_FEDORA_LATEST
+  stage: test
+  allow_failure: true
+  variables:
+    LIBRSVG_DEBUG: "no"
+  <<: *distro_test
+  <<: *stage_3
+
+debian:testing_release_i386:
+  image: $I386_DEBIAN_TESTING
+  allow_failure: true
+  variables:
+    LIBRSVG_DEBUG: "no"
+  before_script:
+    - export PATH=$PATH:/usr/lib/i386-linux-gnu/gdk-pixbuf-2.0
+  <<: *distro_test
+  <<: *stage_3
+
+# STAGE 3 RUSTC TESTS
+#######################################################################
+
+.rustc 1.26 1:
+  image: $RUSTC_1_26
+  variables:
+    LIBRSVG_DEBUG: "yes"
+  <<: *rustc
+  <<: *stage_3
+
+.rustc 1.27 2:
+  image: $RUSTC_1_27
+  variables:
+    LIBRSVG_DEBUG: "yes"
+  <<: *rustc
+  <<: *stage_3
+
+.rustc 1.28 3:
+  image: $RUSTC_1_28
+  variables:
+    LIBRSVG_DEBUG: "yes"
+  <<: *rustc
+  <<: *stage_3
+
+# STAGE 4 DOCUMENTATION
+#######################################################################
+
+pages:
+  image: $AMD64_OPENSUSE_TUMBLEWEED
+  stage: test
+  script:
+    - mkdir -p public/doc
+    - sudo cargo doc --document-private-items --no-deps
+    - cp -r target/doc/* public/doc
+
+  artifacts:
+    paths:
+      - public
+
+  only:
+    - master

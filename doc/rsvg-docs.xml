@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+               "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+  <!ENTITY % local.common.attrib "xmlns:xi  CDATA  #FIXED 'http://www.w3.org/2003/XInclude'">
+  <!ENTITY version SYSTEM "version.xml">
+]>
+<book id="index" xmlns:xi="http://www.w3.org/2003/XInclude">
+  <bookinfo>
+    <title>Librsvg Reference Manual</title>
+    <releaseinfo>
+      For librsvg version &version;
+
+      The latest version of this documentation can be found on-line at the
+      <ulink url="https://developer.gnome.org/rsvg/stable/" role="online-location">GNOME Library</ulink>.
+    </releaseinfo>
+
+    <copyright>
+      <year>2003</year>
+      <year>2004</year>
+      <year>2005</year>
+      <year>2006</year>
+      <year>2007</year>
+      <year>2008</year>
+      <year>2009</year>
+      <holder>Dom Lachowicz</holder>
+    </copyright>
+
+    <copyright>
+      <year>2009</year>
+      <year>2010</year>
+      <holder>Christian Persch</holder>
+    </copyright>
+
+    <copyright>
+      <year>2017</year>
+      <year>2018</year>
+      <year>2019</year>
+      <holder>Federico Mena Quintero</holder>
+    </copyright>
+  </bookinfo>
+
+  <part id="rsvg">
+    <title>API Reference</title>
+    <partintro>
+      <para>
+        Librsvg is a library for rendering Scalable Vector Graphics 1.1
+        files (<ulink url="https://www.w3.org/TR/SVG/">SVG 1.1</ulink>).
+        Specifically, it can take non-animated, non-scripted SVG data
+        and render it into a <ulink url="https://www.cairographics.org/">Cairo</ulink>
+        surface.  Normally this means an in-memory raster surface, but
+        it could also be any of the other surface types that Cairo
+        supports.
+      </para>
+
+      <para>
+	Librsvg supports many of the graphic features in the <ulink
+	url="https://www.w3.org/TR/SVG/">SVG 1.1
+	specification</ulink>.  The main features of SVG 1.1 that
+	librsvg does not support are the following:
+      </para>
+
+      <itemizedlist>
+	<listitem>
+	  <para>
+	    Scripting or animation - Librsvg reads SVG data and
+	    renders it to a static image.  There is no provision to
+	    execute scripts that may control animation parameters.
+	  </para>
+	</listitem>
+
+	<listitem>
+	  <para>
+	    Access to the DOM - Librsvg creates an internal
+	    representation of the SVG data, but it does not provide
+	    outside access to the resulting Document Object Model
+	    (DOM).
+	  </para>
+	</listitem>
+
+	<listitem>
+	  <para>
+	    SVG fonts - Instead, librsvg relies on the system's fonts,
+	    particularly those that are available through Cairo/Pango.
+	  </para>
+	</listitem>
+      </itemizedlist>
+    </partintro>
+
+    <xi:include href="overview.xml"/>
+    <xi:include href="recommendations.xml"/>
+
+    <xi:include href="xml/rsvg-handle.xml"/>
+    <xi:include href="xml/rsvg-gio.xml"/>
+    <xi:include href="xml/rsvg-cairo.xml"/>
+    <xi:include href="xml/rsvg-pixbuf.xml"/>
+    <xi:include href="xml/rsvg-features.xml"/>
+  </part>
+
+  <chapter xml:id="object-tree">
+    <title>Object Hierarchy</title>
+     <xi:include href="xml/tree_index.sgml"/>
+  </chapter>
+  <index xml:id="api-index-full">
+    <title>API Index</title>
+    <xi:include href="xml/api-index-full.xml"/>
+  </index>
+  <index xml:id="api-index-deprecated" role="deprecated">
+    <title>Index of deprecated symbols</title>
+    <xi:include href="xml/api-index-deprecated.xml"/>
+  </index>
+  <index xml:id="api-index-2-4" role="2.4">
+    <title>Index of new symbols in 2.4</title>
+    <xi:include href="xml/api-index-2.4.xml"/>
+  </index>
+  <index xml:id="api-index-2-8" role="2.8">
+    <title>Index of new symbols in 2.8</title>
+    <xi:include href="xml/api-index-2.8.xml"/>
+  </index>
+  <index xml:id="api-index-2-9" role="2.9">
+    <title>Index of new symbols in 2.9</title>
+    <xi:include href="xml/api-index-2.9.xml"/>
+  </index>
+  <index xml:id="api-index-2-14" role="2.14">
+    <title>Index of new symbols in 2.14</title>
+    <xi:include href="xml/api-index-2.14.xml"/>
+  </index>
+  <index xml:id="api-index-2-22" role="2.22">
+    <title>Index of new symbols in 2.22</title>
+    <xi:include href="xml/api-index-2.22.xml"/>
+  </index>
+  <index xml:id="api-index-2-32" role="2.32">
+    <title>Index of new symbols in 2.32</title>
+    <xi:include href="xml/api-index-2.32.xml"/>
+  </index>
+  <index xml:id="api-index-2-36" role="2.36">
+    <title>Index of new symbols in 2.36</title>
+    <xi:include href="xml/api-index-2.36.xml"/>
+  </index>
+  <index xml:id="api-index-2-46" role="2.46">
+    <title>Index of new symbols in 2.46</title>
+    <xi:include href="xml/api-index-2.46.xml"/>
+  </index>
+
+  <xi:include href="xml/annotation-glossary.xml"/>
+
+  <appendix xml:id="licence">
+    <title>Licence</title>
+
+    <para>
+      This library is free software; you can redistribute it and/or
+      modify it under the terms of the <citetitle>GNU Lesser General
+      Public License</citetitle> as published by the Free Software
+      Foundation; either version 2.1 of the License, or (at your
+      option) any later version.
+    </para>
+
+    <para>
+      This library is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      <citetitle>GNU Lesser General Public License</citetitle> for
+      more details.
+    </para>
+
+    <para>
+      You may obtain a copy of the <citetitle>GNU Lesser General
+      Public Licence</citetitle> from the Free Software Foundation at
+      <ulink url="https://www.gnu.org/licenses/">GNU Licences web
+      site</ulink> or by writing to:
+
+      <address>
+        The Free Software Foundation, Inc.,
+        <street>51 Franklin St</street> – Fifth Floor,
+        <city>Boston</city>, <state>MA</state> <postcode>02110-1301</postcode>,
+        <country>USA</country>
+      </address>
+    </para>
+  </appendix>
+
+</book>
